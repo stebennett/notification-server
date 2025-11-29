@@ -902,3 +902,167 @@ The application must handle SIGTERM and SIGINT signals gracefully:
 5. Exit cleanly
 
 Shutdown timeout: 30 seconds (configurable via `SHUTDOWN_TIMEOUT` environment variable)
+
+## CI/CD Pipeline
+
+### Overview
+
+The project uses GitHub Actions for continuous integration and release automation.
+
+### Pull Request Workflow
+
+Every pull request triggers a build and test workflow:
+
+```yaml
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Test
+        run: go test -v -race -coverprofile=coverage.out ./...
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.out
+          fail_ci_if_error: false
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+```
+
+### Release Workflow
+
+Releases are triggered by pushing semantic version tags matching `vA.B.C` (e.g., `v1.0.0`, `v2.1.3`):
+
+```yaml
+# .github/workflows/release.yml
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Run tests
+        run: go test -v -race ./...
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+```
+
+### Release Process
+
+To create a new release:
+
+```bash
+# Ensure you're on main with latest changes
+git checkout main
+git pull origin main
+
+# Create and push a semantic version tag
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+The release workflow will:
+1. Run all tests
+2. Build multi-architecture Docker images (amd64, arm64)
+3. Push images to GitHub Container Registry (ghcr.io)
+4. Create a GitHub Release with auto-generated release notes
+
+### Docker Image Tags
+
+For a release tagged `v1.2.3`, the following Docker image tags are created:
+- `ghcr.io/<owner>/notification-server:1.2.3`
+- `ghcr.io/<owner>/notification-server:1.2`
+- `ghcr.io/<owner>/notification-server:1`
