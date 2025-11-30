@@ -13,23 +13,23 @@
 - ~~Create `rabbitmq-enabled-plugins` file~~
 - ~~Create `.env.example` with all environment variables~~
 
-## Phase 2: CI/CD Pipeline
+## Phase 2: CI/CD Pipeline ✅
 
-**PR 2.1: CI workflow for pull requests**
-- Create `.github/workflows/ci.yml`
-- Build and test on every pull request to main
-- Run `go build`, `go test` with race detector and coverage
-- Add golangci-lint for static analysis
-- Upload coverage reports to Codecov
+**PR 2.1: CI workflow for pull requests** ✅
+- ~~Create `.github/workflows/ci.yml`~~
+- ~~Build and test on every pull request to main~~
+- ~~Run `go build`, `go test` with race detector and coverage~~
+- ~~Add golangci-lint for static analysis~~
+- ~~Upload coverage reports to Codecov~~
 
-**PR 2.2: Release workflow**
-- Create `.github/workflows/release.yml`
-- Trigger on semantic version tags (`v[0-9]+.[0-9]+.[0-9]+`)
-- Run tests before release
-- Build multi-architecture Docker images (amd64, arm64)
-- Push to GitHub Container Registry (ghcr.io)
-- Create GitHub Release with auto-generated release notes
-- Tag images with semantic versions (e.g., `1.2.3`, `1.2`, `1`)
+**PR 2.2: Release workflow** ✅
+- ~~Create `.github/workflows/release.yml`~~
+- ~~Trigger on semantic version tags (`v[0-9]+.[0-9]+.[0-9]+`)~~
+- ~~Run tests before release~~
+- ~~Build multi-architecture Docker images (amd64, arm64)~~
+- ~~Push to GitHub Container Registry (ghcr.io)~~
+- ~~Create GitHub Release with auto-generated release notes~~
+- ~~Tag images with semantic versions (e.g., `1.2.3`, `1.2`, `1`)~~
 
 ## Phase 3: RabbitMQ Infrastructure
 
@@ -133,11 +133,11 @@
 - Wait for in-flight messages to complete (with timeout)
 - Close connections cleanly
 
-**PR 8.2: Dockerfile**
-- Create multi-stage Dockerfile
-- Build static binary
-- Copy templates to final image
-- Run as non-root user
+**PR 8.2: Dockerfile** ✅ *(completed early to enable release workflow)*
+- ~~Create multi-stage Dockerfile~~
+- ~~Build static binary~~
+- Copy templates to final image *(deferred until templates exist)*
+- ~~Run as non-root user~~
 
 **PR 8.3: Integration tests**
 - Test RabbitMQ message flow end-to-end
