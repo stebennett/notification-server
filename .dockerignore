@@ -1,0 +1,27 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+docs/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build artifacts
+notification-service
+coverage.out
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Environment files
+.env
+.env.*
+!.env.example
